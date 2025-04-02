@@ -1,0 +1,6 @@
+*.pem
+challenge.json
+response.json
+mfa_challenges.db
+__pycache__/
+*.pyc

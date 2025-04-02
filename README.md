@@ -1,0 +1,1 @@
+This project implements a portable MFA oracle designed to work across transport layers like email, SMS, or local IPC. It separates intent from identity, allowing trusted human approval with cryptographic backing. Small enough to embed, flexible enough to extend.

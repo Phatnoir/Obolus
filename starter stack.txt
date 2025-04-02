@@ -1,0 +1,7 @@
+🛠️ Your "Sane" Starter Stack
+Component	Tech	Reason
+Server-side	Python + FastAPI + cryptography	Fast to prototype, easy to read, async-friendly
+Client-side	HTML/JS PWA + tweetnacl.js	No installs, cross-platform, no app store gatekeeping
+Storage	SQLite	Lightweight and portable
+Transport	HTTPS (with encrypted payload)	Secure, flexible, can be swapped later
+Optional fallback	Email via SMTP or curl	Lowest common denominator
