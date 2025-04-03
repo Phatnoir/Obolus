@@ -1,6 +1,24 @@
+# Key material
 *.pem
+
+# Local artifacts
 challenge.json
 response.json
 mfa_challenges.db
+
+# Stray carriage-return corrupted file (Windows artifact)
+challenge.json*
+
+# Python bytecode
 __pycache__/
 *.pyc
+*.pyo
+
+# Shell test script outputs
+*.log
+
+# Editor/OS cruft
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
