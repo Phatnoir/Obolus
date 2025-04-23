@@ -32,38 +32,38 @@ obolus/
 
 ```bash
 # Install dependencies
-pip install cryptography fastapi uvicorn
+pip install cryptography fastapi uvicorn pydantic
 ```
 
 ## Quick Start
 
 1. **Setup**
 
-   ```bash
-   git clone https://github.com/your-username/obolus.git
-   cd obolus
+```bash
+git clone https://github.com/Phatnoir/Obolus.git
+cd Obolus
 
-   # Generate keys
-   python tools/keygen.py --output-dir data/keys
-   ```
+# Generate keys
+python tools/keygen.py --output-dir data/keys
+```
 
 2. **Generate a challenge**
 
-   ```bash
-   python tools/challenge-gen.py "login_request" > challenge.json
-   ```
+```bash
+python tools/challenge-gen.py "login_request" > challenge.json
+```
 
 3. **Sign the challenge**
 
-   ```bash
-   python tools/obolus-sign.py --key data/keys/private_key.pem --challenge challenge.json > response.json
-   ```
+```bash
+python tools/obolus-sign.py --key data/keys/private_key.pem --challenge challenge.json > response.json
+```
 
 4. **Verify the response**
 
-   ```bash
-   python tools/obolus-verify.py --key data/keys/public_key.pem --challenge challenge.json --response response.json
-   ```
+```bash
+python tools/obolus-verify.py --key data/keys/public_key.pem --challenge challenge.json --response response.json
+```
 
 ## Demo Web Interface
 
@@ -72,9 +72,6 @@ A simple interactive demo is available using FastAPI and a static HTML/JavaScrip
 ### Run the Demo
 
 ```bash
-# Generate keys (if not already done)
-python tools/keygen.py --output-dir data/keys
-
 # Start the backend demo server
 python examples/backend-example.py
 ```
