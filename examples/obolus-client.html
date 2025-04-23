@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obolus Client Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.1/nacl-util.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .challenge-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary {
+            background-color: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        button.danger {
+            background-color: #dc3545;
+        }
+        
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        
+        .key-management {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Obolus Client Demo</h1>
+    <p>This is a simple demo of the Obolus authentication protocol, showcasing how it can verify user intent.</p>
+    
+    <div class="container">
+        <!-- Key Management Section -->
+        <div class="card">
+            <h2>Key Management</h2>
+            <div class="key-management">
+                <p>First, you'll need to generate or import a keypair:</p>
+                <button id="generateKeys">Generate New Keypair</button>
+                <div id="keyInfo" class="hidden challenge-details">
+                    <p><strong>Public Key (base64):</strong> <span id="publicKeyDisplay"></span></p>
+                    <p><strong>Private Key (base64):</strong> <span id="privateKeyDisplay"></span></p>
+                    <p><em>Note: In a real application, the private key would be securely stored and never displayed.</em></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Challenge Input Section -->
+        <div class="card">
+            <h2>Challenge Input</h2>
+            <p>Paste a challenge JSON here (normally received from a service):</p>
+            <textarea id="challengeInput" placeholder='{"id": "550e8400-e29b-41d4-a716-446655440000", "action": "login_request", "timestamp": "2023-04-01T12:34:56Z", "nonce": "AAECA/3sd7QkZlMmQ1NWUwOWVk/3d1g=", "expires_at": "2023-04-01T12:35:56Z"}'></textarea>
+            <button id="parseChallenge">Parse Challenge</button>
+        </div>
+        
+        <!-- Challenge Display Section -->
+        <div id="challengeDisplay" class="card hidden">
+            <h2>Challenge Details</h2>
+            <div class="challenge-details">
+                <p><strong>Action:</strong> <span id="actionDisplay"></span></p>
+                <p><strong>ID:</strong> <span id="idDisplay"></span></p>
+                <p><strong>Created:</strong> <span id="timestampDisplay"></span></p>
+                <p><strong>Expires:</strong> <span id="expiresDisplay"></span></p>
+                <p><strong>Time Remaining:</strong> <span id="timeRemainingDisplay"></span></p>
+            </div>
+            <div>
+                <button id="approveChallenge" class="approve">Approve</button>
+                <button id="rejectChallenge" class="danger">Reject</button>
+            </div>
+        </div>
+        
+        <!-- Response Display Section -->
+        <div id="responseDisplay" class="card hidden">
+            <h2>Signed Response</h2>
+            <p>This is the signed response that can be sent back to the service:</p>
+            <textarea id="responseOutput" readonly></textarea>
+            <button id="copyResponse">Copy to Clipboard</button>
+            <div id="verifyStatus" class="status hidden"></div>
+        </div>
+        
+        <!-- Demo API Controls -->
+        <div class="card">
+            <h2>API Demo</h2>
+            <p>Generate a challenge from a demo server:</p>
+            <input type="text" id="actionInput" placeholder="describe the action" value="login_request">
+            <button id="generateChallenge">Generate Challenge</button>
+            <p>API Endpoint: <input type="text" id="apiEndpoint" value="http://localhost:8000" style="width: 300px;"></p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let keyPair = null;
+        let currentChallenge = null;
+        
+        // DOM Elements
+        const generateKeysBtn = document.getElementById('generateKeys');
+        const keyInfo = document.getElementById('keyInfo');
+        const publicKeyDisplay = document.getElementById('publicKeyDisplay');
+        const privateKeyDisplay = document.getElementById('privateKeyDisplay');
+        const challengeInput = document.getElementById('challengeInput');
+        const parseBtn = document.getElementById('parseChallenge');
+        const challengeDisplay = document.getElementById('challengeDisplay');
+        const actionDisplay = document.getElementById('actionDisplay');
+        const idDisplay = document.getElementById('idDisplay');
+        const timestampDisplay = document.getElementById('timestampDisplay');
+        const expiresDisplay = document.getElementById('expiresDisplay');
+        const timeRemainingDisplay = document.getElementById('timeRemainingDisplay');
+        const approveBtn = document.getElementById('approveChallenge');
+        const rejectBtn = document.getElementById('rejectChallenge');
+        const responseDisplay = document.getElementById('responseDisplay');
+        const responseOutput = document.getElementById('responseOutput');
+        const copyBtn = document.getElementById('copyResponse');
+        const verifyStatus = document.getElementById('verifyStatus');
+        const generateChallengeBtn = document.getElementById('generateChallenge');
+        const actionInput = document.getElementById('actionInput');
+        const apiEndpoint = document.getElementById('apiEndpoint');
+        
+        // Helper Functions
+        function formatTimestamp(isoString) {
+            return new Date(isoString).toLocaleString();
+        }
+        
+        function calculateTimeRemaining(expiresAt) {
+            const now = new Date();
+            const expires = new Date(expiresAt);
+            const diff = expires - now;
+            
+            if (diff <= 0) {
+                return "EXPIRED";
+            }
+            
+            return Math.floor(diff / 1000) + " seconds";
+        }
+        
+        function formatMessage(challengeId, action, nonce, responseAction) {
+            return `${challengeId}:${action}:${nonce}:${responseAction}`;
+        }
+        
+        function updateChallengeDisplay() {
+            if (!currentChallenge) return;
+            
+            actionDisplay.textContent = currentChallenge.action;
+            idDisplay.textContent = currentChallenge.id;
+            timestampDisplay.textContent = formatTimestamp(currentChallenge.timestamp);
+            expiresDisplay.textContent = formatTimestamp(currentChallenge.expires_at);
+            timeRemainingDisplay.textContent = calculateTimeRemaining(currentChallenge.expires_at);
+            
+            challengeDisplay.classList.remove('hidden');
+        }
+        
+        function showStatus(message, isSuccess) {
+            verifyStatus.textContent = message;
+            verifyStatus.classList.remove('hidden');
+            verifyStatus.classList.remove('status-success', 'status-error');
+            verifyStatus.classList.add(isSuccess ? 'status-success' : 'status-error');
+        }
+        
+        // Event Handlers
+        generateKeysBtn.addEventListener('click', () => {
+            keyPair = nacl.sign.keyPair();
+            
+            // Display the keys (in a real app, the private key would be secured)
+            publicKeyDisplay.textContent = nacl.util.encodeBase64(keyPair.publicKey);
+            privateKeyDisplay.textContent = nacl.util.encodeBase64(keyPair.secretKey);
+            
+            keyInfo.classList.remove('hidden');
+        });
+        
+        parseBtn.addEventListener('click', () => {
+            try {
+                const challengeJson = challengeInput.value.trim();
+                if (!challengeJson) {
+                    throw new Error("Please enter a challenge JSON");
+                }
+                
+                currentChallenge = JSON.parse(challengeJson);
+                updateChallengeDisplay();
+            } catch (error) {
+                alert("Error parsing challenge: " + error.message);
+            }
+        });
+        
+        approveBtn.addEventListener('click', () => {
+            signChallenge('approved');
+        });
+        
+        rejectBtn.addEventListener('click', () => {
+            signChallenge('rejected');
+        });
+        
+        copyBtn.addEventListener('click', () => {
+            responseOutput.select();
+            document.execCommand('copy');
+            alert("Response copied to clipboard!");
+        });
+        
+        generateChallengeBtn.addEventListener('click', async () => {
+            const action = actionInput.value.trim();
+            if (!action) {
+                return alert("Please enter an action");
+            }
+            
+            try {
+                const endpoint = apiEndpoint.value.trim();
+                const response = await fetch(`${endpoint}/challenge`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        expiry_seconds: 300
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                currentChallenge = await response.json();
+                challengeInput.value = JSON.stringify(currentChallenge, null, 2);
+                updateChallengeDisplay();
+            } catch (error) {
+                alert("Error generating challenge: " + error.message);
+            }
+        });
+        
+        function signChallenge(responseAction) {
+            if (!currentChallenge) {
+                return alert("No challenge to sign");
+            }
+            
+            if (!keyPair) {
+                return alert("Please generate a keypair first");
+            }
+            
+            try {
+                // Format the message string to be signed
+                const message = formatMessage(
+                    currentChallenge.id,
+                    currentChallenge.action,
+                    currentChallenge.nonce,
+                    responseAction
+                );
+                
+                // Sign the message
+                const messageBytes = nacl.util.decodeUTF8(message);
+                const signature = nacl.sign.detached(messageBytes, keyPair.secretKey);
+                const signatureBase64 = nacl.util.encodeBase64(signature);
+                
+                // Create the response object
+                const response = {
+                    id: currentChallenge.id,
+                    response: responseAction,
+                    timestamp: new Date().toISOString(),
+                    signature: signatureBase64
+                };
+                
+                // Display the response
+                responseOutput.value = JSON.stringify(response, null, 2);
+                responseDisplay.classList.remove('hidden');
+                
+                // If we have an API endpoint, verify the response
+                verifyResponse(response);
+            } catch (error) {
+                alert("Error signing challenge: " + error.message);
+            }
+        }
+        
+        async function verifyResponse(response) {
+            try {
+                const endpoint = apiEndpoint.value.trim();
+                if (!endpoint) return;
+                
+                const apiResponse = await fetch(`${endpoint}/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        challenge: currentChallenge,
+                        response: response
+                    })
+                });
+                
+                if (!apiResponse.ok) {
+                    throw new Error(`API error: ${apiResponse.status}`);
+                }
+                
+                const result = await apiResponse.json();
+                if (result.verified) {
+                    showStatus(`Verification successful! The challenge was ${result.status}.`, true);
+                } else {
+                    showStatus(`Verification failed: ${result.status}`, false);
+                }
+            } catch (error) {
+                showStatus("Error verifying response: " + error.message, false);
+            }
+        }
+    </script>
+</body>
+</html>

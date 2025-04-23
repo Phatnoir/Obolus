@@ -48,3 +48,4 @@ fi
 echo -e "\nTest completed successfully!"
 echo "Test artifacts are in: $TEST_DIR"
 echo "You can examine them for debugging or delete the directory when done."
+read -p "Press enter to exit..."
