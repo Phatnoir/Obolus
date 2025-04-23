@@ -30,15 +30,15 @@ python tools/keygen.py --output-dir "$TEST_DIR"
 
 # Step 2: Generate challenge
 echo "[2] Creating challenge for 'test_action'..."
-python tools/challenge-gen.py "test_action" --output "$CHALLENGE_FILE"
+python tools/challenge_gen.py "test_action" --output "$CHALLENGE_FILE"
 
 # Step 3: Sign challenge
 echo "[3] Signing challenge..."
-python tools/obolus-sign.py --key "$PRIVATE_KEY" --challenge "$CHALLENGE_FILE" --output "$RESPONSE_FILE"
+python tools/obolus_sign.py --key "$PRIVATE_KEY" --challenge "$CHALLENGE_FILE" --output "$RESPONSE_FILE"
 
 # Step 4: Verify response
 echo "[4] Verifying response..."
-if python tools/obolus-verify.py --key "$PUBLIC_KEY" --challenge "$CHALLENGE_FILE" --response "$RESPONSE_FILE"; then
+if python tools/obolus_verify.py --key "$PUBLIC_KEY" --challenge "$CHALLENGE_FILE" --response "$RESPONSE_FILE"; then
     echo -e "\n✅ SUCCESS: Challenge approved and verified!"
 else
     echo -e "\n❌ FAILURE: Verification failed!"

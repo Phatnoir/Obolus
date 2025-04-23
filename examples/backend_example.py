@@ -18,7 +18,7 @@ from typing import Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
 
 # Add parent directory to path so we can import core modules
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import obolus modules
 try:
@@ -49,6 +49,7 @@ class ChallengeRequest(BaseModel):
 class VerifyRequest(BaseModel):
     challenge: Dict[str, Any]
     response: Dict[str, Any]
+    public_key: str
 
 # Endpoint to generate a challenge
 @app.post("/challenge")
@@ -74,21 +75,44 @@ async def verify_challenge_response(request: VerifyRequest):
         challenge_json = json.dumps(request.challenge)
         response_json = json.dumps(request.response)
         
-        # Load public key from environment variable or default location
-        public_key_path = os.getenv("OBOLUS_PUBLIC_KEY", "data/keys/public_key.pem")
-        if not os.path.exists(public_key_path):
-            raise HTTPException(
-                status_code=500, 
-                detail=f"Public key not found at {public_key_path}. Set OBOLUS_PUBLIC_KEY environment variable or generate keys."
+        import base64
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+        from core.shared import parse_challenge, format_message
+        from core.verify import parse_response
+
+
+        try:
+            # Load public key from request
+            public_key_bytes = base64.b64decode(request.public_key)
+            public_key = ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
+
+            # Parse challenge and response
+            challenge = parse_challenge(request.challenge)
+            response = parse_response(request.response)
+
+            # Format the original message string
+            message = format_message(
+                challenge["id"],
+                challenge["action"],
+                challenge["nonce"],
+                response["response"]
             )
-        
-        # Verify response
-        success, status = verify_response(challenge_json, response_json, public_key_path)
-        
-        return {
-            "verified": success,
-            "status": status
-        }
+
+            # Decode signature and verify
+            signature = base64.b64decode(response["signature"])
+            public_key.verify(signature, message)
+
+            return {
+                "verified": True,
+                "status": response["response"]
+            }
+
+        except Exception as e:
+            return {
+                "verified": False,
+                "status": f"Invalid signature: {str(e)}"
+            }   
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error verifying response: {str(e)}")
 

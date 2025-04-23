@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obolus Client Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.1/nacl-util.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -277,35 +277,36 @@
         });
         
         generateChallengeBtn.addEventListener('click', async () => {
-            const action = actionInput.value.trim();
-            if (!action) {
-                return alert("Please enter an action");
-            }
-            
-            try {
-                const endpoint = apiEndpoint.value.trim();
-                const response = await fetch(`${endpoint}/challenge`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        action: action,
-                        expiry_seconds: 300
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-                
-                currentChallenge = await response.json();
-                challengeInput.value = JSON.stringify(currentChallenge, null, 2);
-                updateChallengeDisplay();
-            } catch (error) {
-                alert("Error generating challenge: " + error.message);
-            }
-        });
+			const action = actionInput.value.trim();
+			if (!action) {
+				return alert("Please enter an action");
+			}
+
+			try {
+				const endpoint = apiEndpoint.value.trim();
+				const challengeResponse = await fetch(`${endpoint}/challenge`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						action: action,
+					expiry_seconds: 300
+					})
+				});
+
+				if (!challengeResponse.ok) {
+					throw new Error(`API error: ${challengeResponse.status}`);
+				}
+
+				currentChallenge = await challengeResponse.json();
+				challengeInput.value = JSON.stringify(currentChallenge, null, 2);
+				updateChallengeDisplay();
+			} catch (error) {
+				alert("Error generating challenge: " + error.message);
+			}
+		});
+
         
         function signChallenge(responseAction) {
             if (!currentChallenge) {
@@ -360,9 +361,10 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        challenge: currentChallenge,
-                        response: response
-                    })
+						challenge: currentChallenge,
+						response: response,
+						public_key: nacl.util.encodeBase64(keyPair.publicKey)
+					})
                 });
                 
                 if (!apiResponse.ok) {
