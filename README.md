@@ -77,9 +77,6 @@ A simple interactive demo is available using FastAPI and a static HTML/JavaScrip
 # Navigate to the root Obolus directory
 cd Obolus
 
-# Make sure you have generated keys first
-python tools/keygen.py --output-dir data/keys
-
 # Start the backend server
 uvicorn examples.backend_example:app --reload
 ```
