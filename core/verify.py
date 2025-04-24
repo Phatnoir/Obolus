@@ -5,7 +5,7 @@ Obolus core verification module - verify signatures with Ed25519 public keys.
 
 import json
 import base64
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 from cryptography.exceptions import InvalidSignature
@@ -92,11 +92,29 @@ def verify_response(challenge_data, response_data, public_key_path):
         if response["id"] != challenge["id"]:
             return False, "Response ID does not match challenge ID"
         
-        # Check if challenge has expired
+        # Add timestamp validation
+        try:
+            challenge_time = datetime.fromisoformat(challenge["timestamp"])
+            response_time = datetime.fromisoformat(response["timestamp"])
+            now = datetime.now(timezone.utc)
+    
+            # Response should be after challenge was created
+            if response_time < challenge_time:
+                return False, "Response timestamp predates challenge creation"
+        
+            # Response shouldn't be from the future (with small tolerance)
+            tolerance = timedelta(minutes=5)  # Allow for clock drift
+            if response_time > now + tolerance:
+                return False, "Response timestamp is from the future"
+        except ValueError as e:
+            return False, f"Invalid timestamp format: {e}"
+        
+        # Check if challenge has expired - ENHANCED EXPIRATION HANDLING
         expires_at = datetime.fromisoformat(challenge["expires_at"])
         now = datetime.now(timezone.utc)
         if now > expires_at:
-            return False, "Challenge has expired"
+            # Return a specific status code/message for expired challenges
+            return False, "EXPIRED"  # Use a consistent code that can be checked
         
         # Load public key
         public_key = load_public_key(public_key_path)

@@ -33,15 +33,48 @@ def load_private_key(key_path):
         return private_key
     except Exception as e:
         raise Exception(f"Error loading private key: {e}")
+        
+def load_private_key_from_base64(base64_key):
+    """
+    Load an Ed25519 private key from a base64 string.
+    
+    Args:
+        base64_key (str): Base64-encoded private key
+        
+    Returns:
+        Ed25519PrivateKey: Loaded private key
+        
+    Raises:
+        Exception: If key loading fails
+    """
+    try:
+        # Add validation for empty or obviously invalid input
+        if not base64_key or len(base64_key.strip()) == 0:
+            raise ValueError("Empty base64 key provided")
+            
+        # Simple pattern check for base64 string (optional)
+        import re
+        if not re.match(r'^[A-Za-z0-9+/]+={0,2}$', base64_key.strip()):
+            raise ValueError("Input does not appear to be valid base64")
+            
+        key_bytes = base64.b64decode(base64_key)
+        private_key = serialization.load_der_private_key(
+            key_bytes,
+            password=None
+        )
+        return private_key
+    except Exception as e:
+        raise Exception(f"Error loading private key from base64: {e}")
 
-def sign_challenge(challenge_data, private_key_path, response_action="approved"):
+def sign_challenge(challenge_data, private_key_source, response_action="approved", is_base64=False):
     """
     Sign a challenge with an Ed25519 private key.
     
     Args:
         challenge_data (str or dict): Challenge data as JSON string or dictionary
-        private_key_path (str): Path to the private key file
+        private_key_source (str): Path to private key file or base64-encoded key
         response_action (str): Response action ('approved' or 'rejected')
+        is_base64 (bool): Whether private_key_source is a base64 string
         
     Returns:
         dict: Signed response object
@@ -54,7 +87,10 @@ def sign_challenge(challenge_data, private_key_path, response_action="approved")
     challenge = parse_challenge(challenge_data)
     
     # Load private key
-    private_key = load_private_key(private_key_path)
+    if is_base64:
+        private_key = load_private_key_from_base64(private_key_source)
+    else:
+        private_key = load_private_key(private_key_source)
     
     # Format message and sign
     message = format_message(
@@ -68,14 +104,15 @@ def sign_challenge(challenge_data, private_key_path, response_action="approved")
     # Create response
     return create_response(challenge["id"], response_action, signature)
 
-def sign_challenge_to_json(challenge_data, private_key_path, response_action="approved"):
+def sign_challenge_to_json(challenge_data, private_key_source, response_action="approved", is_base64=False):
     """
     Sign a challenge and return the response as a JSON string.
     
     Args:
         challenge_data (str or dict): Challenge data as JSON string or dictionary
-        private_key_path (str): Path to the private key file
+        private_key_source (str): Path to private key file or base64-encoded key
         response_action (str): Response action ('approved' or 'rejected')
+        is_base64 (bool): Whether private_key_source is a base64 string
         
     Returns:
         str: JSON string of the signed response
@@ -84,5 +121,5 @@ def sign_challenge_to_json(challenge_data, private_key_path, response_action="ap
         ValueError: If challenge is invalid or response action is invalid
         Exception: If signing fails
     """
-    response = sign_challenge(challenge_data, private_key_path, response_action)
+    response = sign_challenge(challenge_data, private_key_source, response_action, is_base64)
     return json.dumps(response, indent=2)
