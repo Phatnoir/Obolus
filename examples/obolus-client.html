@@ -7,165 +7,350 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
     <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-hover: #45a049;
+            --danger: #dc3545;
+            --danger-hover: #c82333;
+            --secondary: #6c757d;
+            --secondary-hover: #5a6268;
+            --light-bg: #f8f9fa;
+            --border: #ddd;
+            --text: #333;
+            --heading: #2c3e50;
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --error-bg: #f8d7da;
+            --error-text: #721c24;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: var(--text);
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         
-        h1, h2 {
-            color: #2c3e50;
+        h1, h2, h3 {
+            color: var(--heading);
         }
         
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .card {
-            border: 1px solid #ddd;
+        .step-container {
+            background-color: white;
             border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         
-        .challenge-details {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .action-row {
+            display: flex;
+            gap: 10px;
             margin: 15px 0;
         }
         
-        textarea {
+        textarea, input[type="text"] {
             width: 100%;
-            height: 120px;
-            font-family: monospace;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border);
             border-radius: 4px;
+            font-family: monospace;
+            margin: 5px 0;
+        }
+        
+        textarea {
+            min-height: 80px;
+            resize: vertical;
         }
         
         button {
-            background-color: #4CAF50;
+            background-color: var(--primary);
             color: white;
             border: none;
             padding: 10px 15px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            margin-top: 10px;
+            transition: background-color 0.2s;
         }
         
         button:hover {
-            background-color: #45a049;
+            background-color: var(--primary-hover);
         }
         
         button.secondary {
-            background-color: #6c757d;
+            background-color: var(--secondary);
         }
         
         button.secondary:hover {
-            background-color: #5a6268;
+            background-color: var(--secondary-hover);
         }
         
         button.danger {
-            background-color: #dc3545;
+            background-color: var(--danger);
         }
         
         button.danger:hover {
-            background-color: #c82333;
+            background-color: var(--danger-hover);
         }
         
-        .key-management {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .status {
+        .info-panel {
+            background-color: var(--light-bg);
             padding: 15px;
             border-radius: 4px;
-            margin-top: 15px;
+            margin: 10px 0;
         }
         
-        .status-success {
-            background-color: #d4edda;
-            color: #155724;
+        .key-info {
+            word-break: break-all;
         }
         
-        .status-error {
-            background-color: #f8d7da;
-            color: #721c24;
+        .key-display {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .notification {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+        }
+        
+        .error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
         }
         
         .hidden {
-            display: none;
+            display: none !important;
+        }
+        
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            background-color: var(--light-bg);
+            width: 100%;
+            text-align: left;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .approve-action {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .approve-btn, .reject-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .countdown {
+            font-weight: bold;
+        }
+        
+        .debug-section {
+            margin-top: 30px;
+        }
+
+        .big-action-btn {
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        /* Loading indicator */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .action-row {
+                flex-direction: column;
+            }
+            
+            .approve-action {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Obolus Client Demo</h1>
-    <p>This is a simple demo of the Obolus authentication protocol, showcasing how it can verify user intent.</p>
+    <h1>Obolus Authentication Demo</h1>
+    <p>A streamlined demonstration of the Obolus protocol for secure user intent verification.</p>
     
-    <div class="container">
-        <!-- Key Management Section -->
-        <div class="card">
-            <h2>Key Management</h2>
-            <div class="key-management">
-                <p>First, you'll need to generate or import a keypair:</p>
-                <button id="generateKeys">Generate New Keypair</button>
-                <div id="keyInfo" class="hidden challenge-details">
-                    <p><strong>Public Key (base64):</strong> <span id="publicKeyDisplay"></span></p>
-                    <p><strong>Private Key (base64):</strong> <span id="privateKeyDisplay"></span></p>
-                    <p><em>Note: In a real application, the private key would be securely stored and never displayed.</em></p>
-                </div>
+    <!-- Step 1: Key Management -->
+    <div class="step-container" id="step1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <h2 class="step-title">Set Up Keys</h2>
+        </div>
+        <p>First, you'll need a cryptographic keypair for signing challenges.</p>
+        
+        <div class="action-row">
+            <button id="generateKeys" class="big-action-btn">Generate New Keypair</button>
+        </div>
+        
+        <div id="keyInfo" class="info-panel hidden">
+            <div class="key-info">
+                <p><strong>Public Key:</strong></p>
+                <p class="key-display" id="publicKeyDisplay"></p>
+                
+                <details>
+                    <summary>Show Private Key (only for demo)</summary>
+                    <p><em>Note: In a real application, the private key should be securely stored.</em></p>
+                    <p class="key-display" id="privateKeyDisplay"></p>
+                </details>
             </div>
         </div>
+    </div>
+    
+    <!-- Step 2: Challenge -->
+    <div class="step-container" id="step2" style="opacity: 0.5;">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <h2 class="step-title">Get Challenge</h2>
+        </div>
+        <p>Provide a challenge either by generating one from a server or pasting it.</p>
         
-        <!-- Challenge Input Section -->
-        <div class="card">
-            <h2>Challenge Input</h2>
-            <p>Paste a challenge JSON here (normally received from a service):</p>
-            <textarea id="challengeInput" placeholder='{"id": "550e8400-e29b-41d4-a716-446655440000", "action": "login_request", "timestamp": "2023-04-01T12:34:56Z", "nonce": "AAECA/3sd7QkZlMmQ1NWUwOWVk/3d1g=", "expires_at": "2023-04-01T12:35:56Z"}'></textarea>
-            <button id="parseChallenge">Parse Challenge</button>
+        <div class="action-row">
+            <button id="genChallengeBtn" class="big-action-btn" disabled>Generate Challenge</button>
         </div>
         
-        <!-- Challenge Display Section -->
-        <div id="challengeDisplay" class="card hidden">
-            <h2>Challenge Details</h2>
-            <div class="challenge-details">
-                <p><strong>Action:</strong> <span id="actionDisplay"></span></p>
-                <p><strong>ID:</strong> <span id="idDisplay"></span></p>
+        <div class="action-row">
+            <p>- OR -</p>
+        </div>
+        
+        <div class="action-row">
+            <textarea id="challengeInput" placeholder='Paste a challenge JSON here...' disabled></textarea>
+            <button id="parseChallenge" class="secondary" disabled>Parse</button>
+        </div>
+        
+        <div id="apiSettings" class="hidden">
+            <p>API Settings:</p>
+            <div class="action-row">
+                <input type="text" id="actionInput" placeholder="Action (e.g. login_request)" value="login_request">
+                <input type="text" id="apiEndpoint" value="http://localhost:8000" placeholder="API Endpoint">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 3: Decision -->
+    <div class="step-container" id="step3" style="opacity: 0.5;">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <h2 class="step-title">Make Decision</h2>
+        </div>
+        
+        <div id="challengeDisplay" class="hidden">
+            <p>Review this challenge request:</p>
+            
+            <div class="info-panel">
+                <h3 id="actionDisplay" style="margin-top: 0; font-size: 1.5rem;"></h3>
+                <p><strong>Challenge ID:</strong> <span id="idDisplay"></span></p>
                 <p><strong>Created:</strong> <span id="timestampDisplay"></span></p>
                 <p><strong>Expires:</strong> <span id="expiresDisplay"></span></p>
-                <p><strong>Time Remaining:</strong> <span id="timeRemainingDisplay"></span></p>
+                <p><strong>Time Remaining:</strong> <span id="timeRemainingDisplay" class="countdown"></span></p>
             </div>
-            <div>
-                <button id="approveChallenge" class="approve">Approve</button>
-                <button id="rejectChallenge" class="danger">Reject</button>
+            
+            <div class="approve-action">
+                <button id="approveChallenge" class="approve-btn">✓ Approve</button>
+                <button id="rejectChallenge" class="reject-btn danger">✗ Reject</button>
             </div>
         </div>
-        
-        <!-- Response Display Section -->
-        <div id="responseDisplay" class="card hidden">
-            <h2>Signed Response</h2>
-            <p>This is the signed response that can be sent back to the service:</p>
-            <textarea id="responseOutput" readonly></textarea>
-            <button id="copyResponse">Copy to Clipboard</button>
-            <div id="verifyStatus" class="status hidden"></div>
+    </div>
+    
+    <!-- Step 4: Response & Verification -->
+    <div class="step-container" id="step4" style="opacity: 0.5;">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <h2 class="step-title">Verification Result</h2>
         </div>
         
-        <!-- Demo API Controls -->
-        <div class="card">
-            <h2>API Demo</h2>
-            <p>Generate a challenge from a demo server:</p>
-            <input type="text" id="actionInput" placeholder="describe the action" value="login_request">
-            <button id="generateChallenge">Generate Challenge</button>
-            <p>API Endpoint: <input type="text" id="apiEndpoint" value="http://localhost:8000" style="width: 300px;"></p>
+        <div id="responseDisplay" class="hidden">
+            <div id="verifyStatus" class="notification hidden"></div>
+            
+            <details>
+                <summary>View Signed Response</summary>
+                <textarea id="responseOutput" readonly></textarea>
+                <button id="copyResponse" class="secondary">Copy to Clipboard</button>
+            </details>
+        </div>
+    </div>
+    
+    <!-- Debug Tools -->
+    <div class="debug-section">
+        <button class="collapsible" id="toggleDebug">
+            Show Debug Tools
+            <span>▼</span>
+        </button>
+        <div class="collapsible-content" id="debugContent">
+            <div style="padding: 15px;">
+                <h3>Raw JSON Data</h3>
+                <p>Challenge:</p>
+                <textarea id="debugChallenge" readonly></textarea>
+                <p>Response:</p>
+                <textarea id="debugResponse" readonly></textarea>
+            </div>
         </div>
     </div>
 
@@ -173,29 +358,79 @@
         // Global variables
         let keyPair = null;
         let currentChallenge = null;
+        let countdownInterval = null;
         
         // DOM Elements
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        
         const generateKeysBtn = document.getElementById('generateKeys');
         const keyInfo = document.getElementById('keyInfo');
         const publicKeyDisplay = document.getElementById('publicKeyDisplay');
         const privateKeyDisplay = document.getElementById('privateKeyDisplay');
+        
+        const genChallengeBtn = document.getElementById('genChallengeBtn');
         const challengeInput = document.getElementById('challengeInput');
         const parseBtn = document.getElementById('parseChallenge');
+        const apiSettings = document.getElementById('apiSettings');
+        
         const challengeDisplay = document.getElementById('challengeDisplay');
         const actionDisplay = document.getElementById('actionDisplay');
         const idDisplay = document.getElementById('idDisplay');
         const timestampDisplay = document.getElementById('timestampDisplay');
         const expiresDisplay = document.getElementById('expiresDisplay');
         const timeRemainingDisplay = document.getElementById('timeRemainingDisplay');
+        
         const approveBtn = document.getElementById('approveChallenge');
         const rejectBtn = document.getElementById('rejectChallenge');
+        
         const responseDisplay = document.getElementById('responseDisplay');
         const responseOutput = document.getElementById('responseOutput');
         const copyBtn = document.getElementById('copyResponse');
         const verifyStatus = document.getElementById('verifyStatus');
-        const generateChallengeBtn = document.getElementById('generateChallenge');
+        
         const actionInput = document.getElementById('actionInput');
         const apiEndpoint = document.getElementById('apiEndpoint');
+        
+        const toggleDebug = document.getElementById('toggleDebug');
+        const debugContent = document.getElementById('debugContent');
+        const debugChallenge = document.getElementById('debugChallenge');
+        const debugResponse = document.getElementById('debugResponse');
+        
+        // Check if we have keys in localStorage
+        function checkForStoredKeys() {
+            const storedPublicKey = localStorage.getItem('obolus_publicKey');
+            const storedPrivateKey = localStorage.getItem('obolus_privateKey');
+            
+            if (storedPublicKey && storedPrivateKey) {
+                try {
+                    const publicKey = nacl.util.decodeBase64(storedPublicKey);
+                    const secretKey = nacl.util.decodeBase64(storedPrivateKey);
+                    
+                    keyPair = {
+                        publicKey: publicKey,
+                        secretKey: secretKey
+                    };
+                    
+                    publicKeyDisplay.textContent = storedPublicKey;
+                    privateKeyDisplay.textContent = storedPrivateKey;
+                    keyInfo.classList.remove('hidden');
+                    
+                    // Enable step 2
+                    activateStep2();
+                    
+                    return true;
+                } catch (e) {
+                    console.error("Error loading stored keys:", e);
+                    localStorage.removeItem('obolus_publicKey');
+                    localStorage.removeItem('obolus_privateKey');
+                }
+            }
+            
+            return false;
+        }
         
         // Helper Functions
         function formatTimestamp(isoString) {
@@ -211,41 +446,106 @@
                 return "EXPIRED";
             }
             
-            return Math.floor(diff / 1000) + " seconds";
+            const minutes = Math.floor(diff / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            return `${minutes}m ${seconds}s`;
+        }
+        
+        function updateCountdown() {
+            if (!currentChallenge || !currentChallenge.expires_at) return;
+            
+            timeRemainingDisplay.textContent = calculateTimeRemaining(currentChallenge.expires_at);
+            
+            // Check if expired
+            const now = new Date();
+            const expires = new Date(currentChallenge.expires_at);
+            if (now >= expires) {
+                clearInterval(countdownInterval);
+                timeRemainingDisplay.textContent = "EXPIRED";
+                timeRemainingDisplay.style.color = "var(--danger)";
+                
+                // Disable approve/reject buttons
+                approveBtn.disabled = true;
+                rejectBtn.disabled = true;
+            }
         }
         
         function formatMessage(challengeId, action, nonce, responseAction) {
             return `${challengeId}:${action}:${nonce}:${responseAction}`;
         }
         
-        function updateChallengeDisplay() {
-            if (!currentChallenge) return;
-            
-            actionDisplay.textContent = currentChallenge.action;
-            idDisplay.textContent = currentChallenge.id;
-            timestampDisplay.textContent = formatTimestamp(currentChallenge.timestamp);
-            expiresDisplay.textContent = formatTimestamp(currentChallenge.expires_at);
-            timeRemainingDisplay.textContent = calculateTimeRemaining(currentChallenge.expires_at);
-            
+        function activateStep2() {
+            step2.style.opacity = "1";
+            genChallengeBtn.disabled = false;
+            challengeInput.disabled = false;
+            parseBtn.disabled = false;
+            apiSettings.classList.remove('hidden');
+        }
+        
+        function activateStep3() {
+            step3.style.opacity = "1";
             challengeDisplay.classList.remove('hidden');
         }
         
-        function showStatus(message, isSuccess) {
-            verifyStatus.textContent = message;
-            verifyStatus.classList.remove('hidden');
-            verifyStatus.classList.remove('status-success', 'status-error');
-            verifyStatus.classList.add(isSuccess ? 'status-success' : 'status-error');
+        function activateStep4() {
+            step4.style.opacity = "1";
+            responseDisplay.classList.remove('hidden');
+        }
+        
+        function updateChallengeDisplay() {
+            if (!currentChallenge) return;
+            
+            actionDisplay.textContent = currentChallenge.action || "Unknown Action";
+            idDisplay.textContent = currentChallenge.id;
+            timestampDisplay.textContent = formatTimestamp(currentChallenge.timestamp);
+            expiresDisplay.textContent = formatTimestamp(currentChallenge.expires_at);
+            
+            // Update countdown immediately and start interval
+            clearInterval(countdownInterval);
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+            
+            // Update debug view
+            debugChallenge.value = JSON.stringify(currentChallenge, null, 2);
+            
+            activateStep3();
+        }
+        
+        function showNotification(element, message, isSuccess) {
+            element.textContent = message;
+            element.classList.remove('hidden', 'success', 'error');
+            element.classList.add(isSuccess ? 'success' : 'error');
         }
         
         // Event Handlers
         generateKeysBtn.addEventListener('click', () => {
-            keyPair = nacl.sign.keyPair();
+            generateKeysBtn.disabled = true;
+            generateKeysBtn.innerHTML = '<span class="loading"></span> Generating...';
             
-            // Display the keys (in a real app, the private key would be secured)
-            publicKeyDisplay.textContent = nacl.util.encodeBase64(keyPair.publicKey);
-            privateKeyDisplay.textContent = nacl.util.encodeBase64(keyPair.secretKey);
-            
-            keyInfo.classList.remove('hidden');
+            // Small delay to show loading effect
+            setTimeout(() => {
+                keyPair = nacl.sign.keyPair();
+                
+                const publicKeyBase64 = nacl.util.encodeBase64(keyPair.publicKey);
+                const privateKeyBase64 = nacl.util.encodeBase64(keyPair.secretKey);
+                
+                // Store keys in localStorage
+                localStorage.setItem('obolus_publicKey', publicKeyBase64);
+                localStorage.setItem('obolus_privateKey', privateKeyBase64);
+                
+                // Display the keys
+                publicKeyDisplay.textContent = publicKeyBase64;
+                privateKeyDisplay.textContent = privateKeyBase64;
+                keyInfo.classList.remove('hidden');
+                
+                // Enable step 2
+                activateStep2();
+                
+                // Reset button
+                generateKeysBtn.disabled = false;
+                generateKeysBtn.textContent = 'Generate New Keypair';
+            }, 500);
         });
         
         parseBtn.addEventListener('click', () => {
@@ -262,6 +562,43 @@
             }
         });
         
+        genChallengeBtn.addEventListener('click', async () => {
+            const action = actionInput.value.trim();
+            if (!action) {
+                return alert("Please enter an action");
+            }
+            
+            genChallengeBtn.disabled = true;
+            genChallengeBtn.innerHTML = '<span class="loading"></span> Generating...';
+            
+            try {
+                const endpoint = apiEndpoint.value.trim();
+                const challengeResponse = await fetch(`${endpoint}/challenge`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        expiry_seconds: 300
+                    })
+                });
+                
+                if (!challengeResponse.ok) {
+                    throw new Error(`API error: ${challengeResponse.status}`);
+                }
+                
+                currentChallenge = await challengeResponse.json();
+                challengeInput.value = JSON.stringify(currentChallenge, null, 2);
+                updateChallengeDisplay();
+            } catch (error) {
+                alert("Error generating challenge: " + error.message);
+            } finally {
+                genChallengeBtn.disabled = false;
+                genChallengeBtn.textContent = 'Generate Challenge';
+            }
+        });
+        
         approveBtn.addEventListener('click', () => {
             signChallenge('approved');
         });
@@ -273,40 +610,26 @@
         copyBtn.addEventListener('click', () => {
             responseOutput.select();
             document.execCommand('copy');
-            alert("Response copied to clipboard!");
+            
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 1500);
         });
         
-        generateChallengeBtn.addEventListener('click', async () => {
-			const action = actionInput.value.trim();
-			if (!action) {
-				return alert("Please enter an action");
-			}
-
-			try {
-				const endpoint = apiEndpoint.value.trim();
-				const challengeResponse = await fetch(`${endpoint}/challenge`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						action: action,
-					expiry_seconds: 300
-					})
-				});
-
-				if (!challengeResponse.ok) {
-					throw new Error(`API error: ${challengeResponse.status}`);
-				}
-
-				currentChallenge = await challengeResponse.json();
-				challengeInput.value = JSON.stringify(currentChallenge, null, 2);
-				updateChallengeDisplay();
-			} catch (error) {
-				alert("Error generating challenge: " + error.message);
-			}
-		});
-
+        toggleDebug.addEventListener('click', function() {
+            this.classList.toggle("active");
+            
+            const content = debugContent;
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                this.querySelector('span').textContent = '▼';
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                this.querySelector('span').textContent = '▲';
+            }
+        });
         
         function signChallenge(responseAction) {
             if (!currentChallenge) {
@@ -341,7 +664,9 @@
                 
                 // Display the response
                 responseOutput.value = JSON.stringify(response, null, 2);
-                responseDisplay.classList.remove('hidden');
+                debugResponse.value = JSON.stringify(response, null, 2);
+                
+                activateStep4();
                 
                 // If we have an API endpoint, verify the response
                 verifyResponse(response);
@@ -353,7 +678,13 @@
         async function verifyResponse(response) {
             try {
                 const endpoint = apiEndpoint.value.trim();
-                if (!endpoint) return;
+                if (!endpoint) {
+                    showNotification(verifyStatus, "No API endpoint provided for verification. Response signed successfully.", true);
+                    return;
+                }
+                
+                verifyStatus.textContent = "Verifying signature...";
+                verifyStatus.classList.remove('hidden', 'success', 'error');
                 
                 const apiResponse = await fetch(`${endpoint}/verify`, {
                     method: 'POST',
@@ -361,10 +692,10 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-						challenge: currentChallenge,
-						response: response,
-						public_key: nacl.util.encodeBase64(keyPair.publicKey)
-					})
+                        challenge: currentChallenge,
+                        response: response,
+                        public_key: nacl.util.encodeBase64(keyPair.publicKey)
+                    })
                 });
                 
                 if (!apiResponse.ok) {
@@ -373,14 +704,34 @@
                 
                 const result = await apiResponse.json();
                 if (result.verified) {
-                    showStatus(`Verification successful! The challenge was ${result.status}.`, true);
+                    showNotification(
+                        verifyStatus, 
+                        `✅ Verification successful! The challenge was ${result.status}.`, 
+                        true
+                    );
                 } else {
-                    showStatus(`Verification failed: ${result.status}`, false);
+                    showNotification(
+                        verifyStatus, 
+                        `❌ Verification failed: ${result.status}`, 
+                        false
+                    );
                 }
             } catch (error) {
-                showStatus("Error verifying response: " + error.message, false);
+                showNotification(
+                    verifyStatus, 
+                    "❌ Error verifying response: " + error.message, 
+                    false
+                );
             }
         }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkForStoredKeys()) {
+                // No stored keys, make sure step 1 is active
+                step1.style.opacity = "1";
+            }
+        });
     </script>
 </body>
 </html>
