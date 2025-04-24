@@ -21,7 +21,7 @@ obolus/
 ├── core/                      # Core protocol implementation
 ├── tools/                     # Command line tools
 ├── examples/                  # Example integrations
-│   ├── backend-example.py     # FastAPI backend demo
+│   ├── backend_example.py     # FastAPI backend demo
 │   └── obolus-client.html     # Browser-based client demo
 ├── tests/                     # Test scripts
 ├── protocol-spec.md           # Protocol specification
@@ -50,19 +50,19 @@ python tools/keygen.py --output-dir data/keys
 2. **Generate a challenge**
 
 ```bash
-python tools/challenge-gen.py "login_request" > challenge.json
+python tools/challenge_gen.py "login_request" > challenge.json
 ```
 
 3. **Sign the challenge**
 
 ```bash
-python tools/obolus-sign.py --key data/keys/private_key.pem --challenge challenge.json > response.json
+python tools/obolus_sign.py --key data/keys/private_key.pem --challenge challenge.json > response.json
 ```
 
 4. **Verify the response**
 
 ```bash
-python tools/obolus-verify.py --key data/keys/public_key.pem --challenge challenge.json --response response.json
+python tools/obolus_verify.py --key data/keys/public_key.pem --challenge challenge.json --response response.json
 ```
 
 ## Demo Web Interface
@@ -71,17 +71,32 @@ A simple interactive demo is available using FastAPI and a static HTML/JavaScrip
 
 ### Run the Demo
 
+1. **Start the backend API server**
+
 ```bash
-# Start the backend demo server
-python examples/backend-example.py
+# Navigate to the root Obolus directory
+cd Obolus
+
+# Make sure you have generated keys first
+python tools/keygen.py --output-dir data/keys
+
+# Start the backend server
+uvicorn examples.backend_example:app --reload
 ```
 
-Then open `examples/obolus-client.html` in your browser.
+The server will start on http://localhost:8000
 
-- Generate a keypair in-browser
+2. **Open the client interface**
+
+Open `examples/obolus-client.html` in your web browser.
+
+3. **Try the interactive workflow**
+
+- Generate a keypair in-browser (or use existing keys)
 - Request a challenge from the server
-- Review, approve, or reject
-- Signed response is verified live
+- Review the challenge details
+- Approve or reject the challenge
+- See verification results in real-time
 
 ### Demo API Endpoints
 
@@ -108,7 +123,7 @@ Obolus also supports a shell-friendly workflow. This example shows how you might
 
 ```bash
 #!/bin/bash
-CHALLENGE=$(python tools/challenge-gen.py "deploy_to_production")
+CHALLENGE=$(python tools/challenge_gen.py "deploy_to_production")
 echo "$CHALLENGE" > /tmp/deploy_challenge.json
 
 echo "Please approve this deployment using your Obolus client"
@@ -119,7 +134,7 @@ while [ ! -f /tmp/deploy_response.json ]; do
     sleep 5
 done
 
-if python tools/obolus-verify.py \
+if python tools/obolus_verify.py \
     --key data/keys/public_key.pem \
     --challenge /tmp/deploy_challenge.json \
     --response /tmp/deploy_response.json; then
@@ -151,4 +166,3 @@ Obolus is designed to support privacy-conscious, intent-driven workflows. While 
 ## License
 
 This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
-
