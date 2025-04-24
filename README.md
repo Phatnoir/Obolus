@@ -114,6 +114,27 @@ response = sign_challenge(challenge, "path/to/private_key.pem")
 success, status = verify_response(challenge, response, "path/to/public_key.pem")
 ```
 
+### Base64 Key Support
+
+In addition to file-based key loading, `sign_challenge()` also supports base64-encoded Ed25519 private keys (DER format). This is useful for browser-to-server integrations or serverless environments.
+
+```python
+sign_challenge(challenge, base64_private_key_string, is_base64=True)
+```
+
+Use this when keys are provided from an external source (e.g. a frontend, secret store, or environment variable).
+
+You can use Obolus as a Python library by importing the core modules:
+
+```python
+from obolus.core import sign_challenge, verify_response
+
+# Example usage:
+challenge = {...}  # A valid challenge object
+response = sign_challenge(challenge, "path/to/private_key.pem")
+success, status = verify_response(challenge, response, "path/to/public_key.pem")
+```
+
 ## Shell Script Integration
 
 Obolus also supports a shell-friendly workflow. This example shows how you might gate a production deployment behind a signed approval:
